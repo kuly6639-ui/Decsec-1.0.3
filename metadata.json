@@ -1,0 +1,6 @@
+{
+  "name": "DecSec 1.0",
+  "description": "Watch Dogs 2 styled hacker terminal with cyber CLI, real network scanner, ctOS IoT node exploits, audio SFX, and high-contrast dark widgets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
