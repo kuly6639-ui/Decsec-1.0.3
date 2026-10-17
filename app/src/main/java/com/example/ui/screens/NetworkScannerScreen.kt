@@ -398,31 +398,60 @@ private fun NearbyDeviceCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Intercepted call / voice preview banner
-            Surface(
-                color = CyberBlack,
-                shape = CutCornerShape(4.dp),
-                border = BorderStroke(1.dp, if (device.isTapped) DedsecPink.copy(alpha = 0.6f) else TerminalBorder),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            // Intercepted call / voice preview banner (Smartphones only)
+            if (device.canInterceptCall) {
+                Surface(
+                    color = CyberBlack,
+                    shape = CutCornerShape(4.dp),
+                    border = BorderStroke(1.dp, if (device.isTapped) DedsecPink.copy(alpha = 0.6f) else TerminalBorder),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.PhoneInTalk,
-                        contentDescription = "Call stream",
-                        tint = if (device.isTapped) DedsecPink else WarningAmber,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "VOICE FEED: ${device.callSubject}",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = if (device.isTapped) DedsecPink else TextWhite,
-                            fontSize = 11.sp
+                    Row(
+                        modifier = Modifier.padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhoneInTalk,
+                            contentDescription = "Call stream",
+                            tint = if (device.isTapped) DedsecPink else WarningAmber,
+                            modifier = Modifier.size(14.dp)
                         )
-                    )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "VOICE FEED: ${device.callSubject}",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = if (device.isTapped) DedsecPink else TextWhite,
+                                fontSize = 11.sp
+                            )
+                        )
+                    }
+                }
+            } else {
+                Surface(
+                    color = CyberBlack,
+                    shape = CutCornerShape(4.dp),
+                    border = BorderStroke(1.dp, TerminalBorder),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LockOpen,
+                            contentDescription = "Hardware stream",
+                            tint = CyberCyan,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "DEVICE TELEMETRY: ${device.callSubject}",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = TextWhite.copy(alpha = 0.85f),
+                                fontSize = 11.sp
+                            )
+                        )
+                    }
                 }
             }
 
@@ -433,24 +462,26 @@ private fun NearbyDeviceCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Listen to calls / tap audio button
-                Button(
-                    onClick = onTapCall,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = DedsecPink,
-                        contentColor = TextWhite
-                    ),
-                    shape = CutCornerShape(4.dp),
-                    modifier = Modifier
-                        .weight(1.2f)
-                        .testTag("tap_call_${device.id}")
-                ) {
-                    Icon(imageVector = Icons.Default.PhoneInTalk, contentDescription = "Listen Call", modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = if (device.isTapped) "ACTIVE WIRETAP" else "LISTEN TO CALL",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
-                    )
+                // Listen to calls / tap audio button ONLY for call-capable devices (Smartphones)
+                if (device.canInterceptCall) {
+                    Button(
+                        onClick = onTapCall,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = DedsecPink,
+                            contentColor = TextWhite
+                        ),
+                        shape = CutCornerShape(4.dp),
+                        modifier = Modifier
+                            .weight(1.2f)
+                            .testTag("tap_call_${device.id}")
+                    ) {
+                        Icon(imageVector = Icons.Default.PhoneInTalk, contentDescription = "Listen Call", modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (device.isTapped) "ACTIVE WIRETAP" else "LISTEN TO CALL",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
                 }
 
                 // Hack device button

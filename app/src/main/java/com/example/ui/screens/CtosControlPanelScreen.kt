@@ -113,6 +113,7 @@ fun CtosControlPanelScreen(
     onNavigateTab: (Int) -> Unit,
     onTapNearbyDevice: (NearbyElectronicDevice) -> Unit,
     onExecuteCommand: (String) -> Unit,
+    onHackDevice: ((NearbyElectronicDevice) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -741,11 +742,11 @@ fun CtosControlPanelScreen(
                             soundManager.playTileMoveSound()
                         } else {
                             soundManager.playPhoneRing()
-                            val targetDev = nearbyDevices.firstOrNull { it.callTranscript.isNotEmpty() } ?: nearbyDevices.firstOrNull()
+                            val targetDev = nearbyDevices.firstOrNull { it.canInterceptCall && it.callTranscript.isNotEmpty() } ?: nearbyDevices.firstOrNull { it.canInterceptCall }
                             if (targetDev != null) {
                                 onTapNearbyDevice(targetDev)
                             } else {
-                                onNavigateTab(2)
+                                onNavigateTab(2) // navigate to scanner
                             }
                         }
                     }
@@ -836,7 +837,7 @@ private fun CtosModuleRow(
         shape = CutCornerShape(4.dp),
         border = BorderStroke(
             if (isSelected) 1.5.dp else 1.dp,
-            if (isSelected) NeonGreenBright else NeonGreen.copy(alpha = 0.35f)
+            if (isSelected) com.example.ui.theme.CyberBlueBright else com.example.ui.theme.TerminalBorder
         ),
         modifier = Modifier
             .fillMaxWidth()
@@ -858,16 +859,16 @@ private fun CtosModuleRow(
                     modifier = Modifier
                         .size(36.dp)
                         .background(
-                            if (isSelected) NeonGreen else com.example.ui.theme.PureBlack,
+                            if (isSelected) com.example.ui.theme.CyberBlueBright else com.example.ui.theme.PureBlack,
                             CutCornerShape(4.dp)
                         )
-                        .border(1.dp, NeonGreen, CutCornerShape(4.dp)),
+                        .border(1.dp, com.example.ui.theme.CyberBlue, CutCornerShape(4.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
-                        tint = if (isSelected) com.example.ui.theme.PureBlackText else NeonGreen,
+                        tint = if (isSelected) com.example.ui.theme.PureBlackText else com.example.ui.theme.CyberBlueBright,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -878,44 +879,51 @@ private fun CtosModuleRow(
                     if (isSelected) {
                         com.example.ui.components.HackerScrambleText(
                             text = title,
-                            color = NeonGreenBright,
+                            color = com.example.ui.theme.TextWhite,
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
+                            triggerKey = isSelected,
                             onLetterLoaded = { soundManager.playLetterLoadSound() }
+                        )
+                        com.example.ui.components.HackerScrambleText(
+                            text = subtitle,
+                            color = com.example.ui.theme.TextBlue,
+                            fontSize = 10.sp,
+                            triggerKey = isSelected
                         )
                     } else {
                         Text(
                             text = title,
                             style = MaterialTheme.typography.bodyMedium.copy(
-                                color = NeonGreen,
+                                color = com.example.ui.theme.TextWhite,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp
                             )
                         )
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = com.example.ui.theme.TextBlueMuted.copy(alpha = 0.8f),
+                                fontSize = 10.sp,
+                                lineHeight = 13.sp
+                            ),
+                            maxLines = 2
+                        )
                     }
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = if (isSelected) NeonGreen.copy(alpha = 0.85f) else TextMuted,
-                            fontSize = 10.sp,
-                            lineHeight = 13.sp
-                        ),
-                        maxLines = 2
-                    )
                 }
             }
 
             Spacer(modifier = Modifier.width(8.dp))
 
             Surface(
-                color = if (isSelected) NeonGreen else com.example.ui.theme.PureBlack,
+                color = if (isSelected) com.example.ui.theme.CyberBlueBright else com.example.ui.theme.PureBlack,
                 shape = CutCornerShape(3.dp),
-                border = BorderStroke(1.dp, NeonGreen)
+                border = BorderStroke(1.dp, com.example.ui.theme.CyberBlue)
             ) {
                 Text(
                     text = badge,
                     style = MaterialTheme.typography.labelSmall.copy(
-                        color = if (isSelected) com.example.ui.theme.PureBlackText else NeonGreen,
+                        color = if (isSelected) com.example.ui.theme.PureBlackText else com.example.ui.theme.CyberBlueBright,
                         fontWeight = FontWeight.Bold,
                         fontSize = 9.sp
                     ),

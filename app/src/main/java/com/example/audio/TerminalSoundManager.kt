@@ -49,6 +49,31 @@ open class TerminalSoundManager(protected val context: Context) {
     private val bootBeepBuffer: ByteArray by lazy { generateBootBeep() }
     private val tileMoveChirpBuffer: ByteArray by lazy { generateTileMoveChirp() }
     private val letterTickBuffer: ByteArray by lazy { generateLetterTick() }
+    private val hackStartBuffer: ByteArray by lazy { generateHackStart() }
+    private val hackSuccessBuffer: ByteArray by lazy { generateHackSuccess() }
+    private val hackFailBuffer: ByteArray by lazy { generateHackFail() }
+
+    open fun playHackStartSound() {
+        if (!isSoundEnabled) return
+        playPcmAsync(hackStartBuffer)
+        vibrateMedium()
+    }
+
+    open fun playHackSuccessSound() {
+        if (!isSoundEnabled) return
+        playPcmAsync(hackSuccessBuffer)
+        vibrateDouble()
+    }
+
+    open fun playHackFailSound() {
+        if (!isSoundEnabled) return
+        playPcmAsync(hackFailBuffer)
+        vibrateHeavy()
+    }
+
+    open fun playHackStart() = playHackStartSound()
+    open fun playHackSuccess() = playHackSuccessSound()
+    open fun playHackFailed() = playHackFailSound()
 
     open fun playTileMoveSound() {
         if (!isSoundEnabled) return
@@ -324,6 +349,68 @@ open class TerminalSoundManager(protected val context: Context) {
             val t = i.toDouble() / sampleRate
             val envelope = exp(-t * 600.0)
             val sample = (sin(2.0 * PI * 3400.0 * t) * envelope * 0.35 * 127.0).toInt()
+            buffer[i] = (128 + sample).coerceIn(0, 255).toByte()
+        }
+        return buffer
+    }
+
+    private fun generateHackStart(): ByteArray {
+        val durationMs = 380
+        val numSamples = (sampleRate * (durationMs / 1000.0)).toInt()
+        val buffer = ByteArray(numSamples)
+        for (i in 0 until numSamples) {
+            val t = i.toDouble() / sampleRate
+            val progress = i.toDouble() / numSamples
+            // Ascending carrier chirp with stepped frequency modulation
+            val stepFreq = when {
+                progress < 0.25 -> 750.0
+                progress < 0.50 -> 1100.0
+                progress < 0.75 -> 1600.0
+                else -> 2200.0
+            }
+            val sweep = sin(2.0 * PI * stepFreq * t)
+            val vibrato = sin(2.0 * PI * 40.0 * t) * 0.2
+            val noise = (kotlin.random.Random.nextDouble(-0.15, 0.15))
+            val envelope = if (progress < 0.08) progress / 0.08 else (1.0 - progress * 0.4)
+            val sample = ((sweep + vibrato + noise) * envelope * 0.45 * 127.0).toInt()
+            buffer[i] = (128 + sample).coerceIn(0, 255).toByte()
+        }
+        return buffer
+    }
+
+    private fun generateHackSuccess(): ByteArray {
+        val durationMs = 460
+        val numSamples = (sampleRate * (durationMs / 1000.0)).toInt()
+        val buffer = ByteArray(numSamples)
+        val noteDur = numSamples / 4
+        val notes = doubleArrayOf(523.25, 659.25, 783.99, 1046.50) // C5, E5, G5, C6
+        for (i in 0 until numSamples) {
+            val noteIndex = (i / noteDur).coerceIn(0, 3)
+            val noteSampleIdx = i % noteDur
+            val tNote = noteSampleIdx.toDouble() / sampleRate
+            val freq = notes[noteIndex]
+            val envelope = exp(-tNote * 8.0) * (if (noteIndex == 3) 1.2 else 1.0)
+            val tone = sin(2.0 * PI * freq * tNote) + 0.3 * sin(2.0 * PI * (freq * 2.0) * tNote)
+            val sample = (tone * envelope * 0.5 * 127.0).toInt()
+            buffer[i] = (128 + sample).coerceIn(0, 255).toByte()
+        }
+        return buffer
+    }
+
+    private fun generateHackFail(): ByteArray {
+        val durationMs = 380
+        val numSamples = (sampleRate * (durationMs / 1000.0)).toInt()
+        val buffer = ByteArray(numSamples)
+        for (i in 0 until numSamples) {
+            val t = i.toDouble() / sampleRate
+            val progress = i.toDouble() / numSamples
+            // Discordant falling tone with sawtooth rasp
+            val freq1 = 280.0 * (1.0 - progress * 0.6)
+            val freq2 = 295.0 * (1.0 - progress * 0.6)
+            val sq1 = if (sin(2.0 * PI * freq1 * t) > 0) 0.6 else -0.6
+            val sq2 = if (sin(2.0 * PI * freq2 * t) > 0) 0.4 else -0.4
+            val envelope = exp(-progress * 2.5)
+            val sample = ((sq1 + sq2) * envelope * 0.45 * 127.0).toInt()
             buffer[i] = (128 + sample).coerceIn(0, 255).toByte()
         }
         return buffer

@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CutCornerShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -48,10 +47,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.audio.TerminalSoundManager
 import com.example.ui.theme.CyberBlack
+import com.example.ui.theme.CyberBlue
+import com.example.ui.theme.CyberBlueBright
+import com.example.ui.theme.CyberBlueDim
+import com.example.ui.theme.CyberCyan
 import com.example.ui.theme.DedsecPink
-import com.example.ui.theme.NeonGreen
-import com.example.ui.theme.NeonGreenBright
 import com.example.ui.theme.TerminalBorder
+import com.example.ui.theme.TextBlue
 import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextWhite
 import kotlinx.coroutines.delay
@@ -59,6 +61,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 enum class BootPhase {
+    HARDWARE_POST,
     MINIMAL_X,
     SYSTEM_LOADING,
     HEXAGON_CIPHER,
@@ -69,9 +72,17 @@ enum class BootPhase {
 }
 
 /**
- * Watch Dogs ctOS Boot Animation matching the user's video:
- * Fast, interactive, non-blocking with tap-anywhere skip,
- * concluding with the DedSec boxed letter-by-letter decryption sequence.
+ * Longer, authentic Watch Dogs ctOS & DecSec 1.0 Boot Sequence.
+ * Styled in crisp white and cyber blue font colors.
+ * Features:
+ * - Stage 1: Cold Hardware POST & Memory bus diagnostics
+ * - Stage 2: Minimalist crosshair targeting
+ * - Stage 3: Stepped System Loading diagnostics
+ * - Stage 4: Subnet Hexagon Cipher permutation
+ * - Stage 5: ctOS Beam Authentication handshake
+ * - Stage 6: 3D Wireframe Polyhedron telemetry
+ * - Stage 7: DecSec 1.0 Hijack boxed letter-by-letter reveal
+ * - Tap anywhere to skip instantly
  */
 @Composable
 fun BootScreen(
@@ -79,70 +90,82 @@ fun BootScreen(
     onBootFinished: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var phase by remember { mutableStateOf(BootPhase.MINIMAL_X) }
-    var cipherString by remember { mutableStateOf("Lxrqgeukf") }
-    var bootProgress by remember { mutableStateOf(0.1f) }
+    var phase by remember { mutableStateOf(BootPhase.HARDWARE_POST) }
+    var cipherString by remember { mutableStateOf("0x7F001A8") }
+    var bootProgress by remember { mutableStateOf(0.05f) }
+    var postMemAddress by remember { mutableStateOf("0x00000000") }
 
-    // Target boxed letters sequence: D E D S E C / c T O S
+    // Target boxed letters sequence: D E C S E C / 1 . 0
     val targetWords = listOf(
-        listOf("D", "E", "D", "S", "E", "C"),
-        listOf("c", "T", "O", "S", "2", ".", "0")
+        listOf("D", "E", "C", "S", "E", "C"),
+        listOf("1", ".", "0", " ", "/", "/", " ", "c", "T", "O", "S")
     )
 
-    // Revealed index counter for the boxed letters
     var revealedCount by remember { mutableIntStateOf(0) }
     val totalLetters = targetWords.sumOf { it.size }
     val cipherCharset = "0123456789ABCDEF$#@%&*?><Ø§"
 
-    // Safe, snappy boot progression: total ~3.5 seconds, or instant on tap!
+    // Longer, cinematic boot progression (~13 seconds total, or instant on tap)
     LaunchedEffect(Unit) {
         soundManager.playBootBeep()
 
-        // Phase 1: Minimalist 'X' (500ms)
-        phase = BootPhase.MINIMAL_X
-        bootProgress = 0.15f
-        delay(550)
-
-        // Phase 2: System Loading stepped bars (600ms)
-        phase = BootPhase.SYSTEM_LOADING
-        soundManager.playTerminalBeep()
-        bootProgress = 0.35f
-        delay(650)
-
-        // Phase 3: Hexagon Cipher text (650ms)
-        phase = BootPhase.HEXAGON_CIPHER
-        soundManager.playDataStream()
-        bootProgress = 0.55f
-        repeat(4) {
-            cipherString = (1..9).map { cipherCharset.random() }.joinToString("")
-            delay(150)
+        // Phase 1: Hardware POST & Memory check (~1.8s)
+        phase = BootPhase.HARDWARE_POST
+        bootProgress = 0.08f
+        for (step in 1..6) {
+            postMemAddress = "0x%08X".format(step * 0x1A4000)
+            soundManager.playLetterLoadSound()
+            delay(280)
         }
 
-        // Phase 4: Horizontal beam + "ctOS" logo (700ms)
+        // Phase 2: Minimalist 'X' (~1.6s)
+        phase = BootPhase.MINIMAL_X
+        soundManager.playTileMoveSound()
+        bootProgress = 0.22f
+        delay(1600)
+
+        // Phase 3: Stepped System Loading bars (~1.7s)
+        phase = BootPhase.SYSTEM_LOADING
+        soundManager.playTerminalBeep()
+        bootProgress = 0.40f
+        delay(1700)
+
+        // Phase 4: Hexagon Cipher text stream (~1.9s)
+        phase = BootPhase.HEXAGON_CIPHER
+        soundManager.playDataStream()
+        bootProgress = 0.58f
+        repeat(7) {
+            cipherString = (1..11).map { cipherCharset.random() }.joinToString("")
+            soundManager.playLetterLoadSound()
+            delay(260)
+        }
+
+        // Phase 5: Horizontal beam + "ctOS" logo (~1.8s)
         phase = BootPhase.CTOS_BEAM_LOGO
         soundManager.playBootBeep()
-        bootProgress = 0.75f
-        delay(700)
+        bootProgress = 0.74f
+        delay(1800)
 
-        // Phase 5: Isometric Wireframe Polyhedron (600ms)
+        // Phase 6: Isometric Wireframe Polyhedron (~1.7s)
         phase = BootPhase.ISOMETRIC_EMBLEM
         soundManager.playSonarPing()
-        bootProgress = 0.90f
-        delay(600)
+        bootProgress = 0.88f
+        delay(1700)
 
-        // Phase 6: DedSec Hijack & Boxed Letters Decryption
+        // Phase 7: DecSec Hijack & Boxed Letters Decryption (~2.5s)
         phase = BootPhase.DEDSEC_HIJACK_BOXES
-        soundManager.playAccessGranted()
+        soundManager.playHackStartSound()
         bootProgress = 1.0f
 
-        // Rapid letter reveal
         for (i in 1..totalLetters) {
-            delay(80)
+            delay(120)
             revealedCount = i
             soundManager.playKeyClick()
         }
 
-        delay(700)
+        delay(800)
+        soundManager.playHackSuccessSound()
+        delay(1200)
         phase = BootPhase.BOOT_COMPLETE
         onBootFinished()
     }
@@ -151,7 +174,7 @@ fun BootScreen(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
-            .clickable { onBootFinished() } // TAP ANYWHERE TO SKIP
+            .clickable { onBootFinished() } // Tap anywhere to skip
             .testTag("boot_screen"),
         contentAlignment = Alignment.Center
     ) {
@@ -165,18 +188,19 @@ fun BootScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "cTOS 2.0 // BOOT SEQUENCE",
+                text = "DECSEC 1.0 // CTOS KERNEL BOOT",
                 style = MaterialTheme.typography.labelSmall.copy(
-                    color = TextMuted,
+                    color = CyberBlueBright,
                     fontSize = 11.sp,
-                    letterSpacing = 1.sp
+                    letterSpacing = 1.sp,
+                    fontFamily = FontFamily.Monospace
                 )
             )
 
             Surface(
-                color = Color.White.copy(alpha = 0.12f),
+                color = CyberBlueBright.copy(alpha = 0.15f),
                 shape = CutCornerShape(4.dp),
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.4f)),
+                border = BorderStroke(1.dp, CyberBlueBright.copy(alpha = 0.6f)),
                 modifier = Modifier
                     .clickable { onBootFinished() }
                     .testTag("skip_boot_button")
@@ -184,7 +208,7 @@ fun BootScreen(
                 Text(
                     text = "TAP TO SKIP [▶▶]",
                     style = MaterialTheme.typography.labelSmall.copy(
-                        color = Color.White,
+                        color = TextWhite,
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp
                     ),
@@ -195,73 +219,138 @@ fun BootScreen(
 
         // Center Content based on BootPhase
         when (phase) {
+            BootPhase.HARDWARE_POST -> {
+                Column(
+                    horizontalAlignment = Alignment.Start,
+                    modifier = Modifier.padding(28.dp)
+                ) {
+                    Text(
+                        text = "BLUME CORPORATION // ctOS CORE BIOS v2.08",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = CyberBlueBright,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "CPU: QUANTUM-ARMv9 64-BIT // 16 CORES ONLINE",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextWhite,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 11.sp
+                        )
+                    )
+                    Text(
+                        text = "RAM CHECK: $postMemAddress OK",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = CyberBlue,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 11.sp
+                        )
+                    )
+                    Text(
+                        text = "SCADA TUNNELS: BOUND TO LOCAL MESH SUBNET",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextWhite.copy(alpha = 0.85f),
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 11.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "[SYS] LOADING SYSTEM SERVICES...",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = CyberBlueBright,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 10.sp
+                        )
+                    )
+                }
+            }
+
             BootPhase.MINIMAL_X -> {
-                // Video Frame 00:01: Minimal white 'X'
                 Canvas(modifier = Modifier.size(90.dp)) {
                     val w = size.width
                     val h = size.height
                     drawLine(color = Color.White, start = Offset(0f, 0f), end = Offset(w, h), strokeWidth = 2.5f)
                     drawLine(color = Color.White, start = Offset(0f, h), end = Offset(w, 0f), strokeWidth = 2.5f)
+                    drawCircle(color = CyberBlueBright.copy(alpha = 0.5f), radius = w * 0.6f, style = Stroke(1.2f))
                 }
             }
 
             BootPhase.SYSTEM_LOADING -> {
-                // Video Frame 00:03: Stepped white rectangular bars + "System Loading"
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
                     Column(horizontalAlignment = Alignment.Start) {
-                        Surface(color = Color.White, modifier = Modifier.width(28.dp).height(12.dp)) {}
-                        Spacer(modifier = Modifier.height(3.dp))
-                        Surface(color = Color.White, modifier = Modifier.width(56.dp).height(12.dp)) {}
-                        Spacer(modifier = Modifier.height(3.dp))
-                        Surface(color = Color.White, modifier = Modifier.width(88.dp).height(12.dp)) {}
+                        Surface(color = Color.White, modifier = Modifier.width(32.dp).height(12.dp)) {}
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Surface(color = CyberBlueBright, modifier = Modifier.width(64.dp).height(12.dp)) {}
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Surface(color = Color.White, modifier = Modifier.width(96.dp).height(12.dp)) {}
                     }
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(18.dp))
                     Text(
                         text = "System Loading",
                         style = MaterialTheme.typography.titleMedium.copy(
-                            color = Color.White,
+                            color = TextWhite,
                             fontFamily = FontFamily.SansSerif,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 18.sp
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+                    )
+                    Text(
+                        text = "ctOS Subnet Handshake...",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = CyberBlueBright,
+                            fontSize = 11.sp
                         )
                     )
                 }
             }
 
             BootPhase.HEXAGON_CIPHER -> {
-                // Video Frame 00:05: Wireframe irregular polygon / hexagon with cipher text
-                Box(modifier = Modifier.size(190.dp), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.size(200.dp), contentAlignment = Alignment.Center) {
                     Canvas(modifier = Modifier.fillMaxSize()) {
                         val center = Offset(size.width / 2f, size.height / 2f)
                         val radius = size.width * 0.45f
                         val path = Path()
                         val sides = 6
                         for (i in 0 until sides) {
-                            val angle = Math.toRadians((i * (360.0 / sides) - 15.0)).toDouble()
+                            val angle = Math.toRadians((i * (360.0 / sides) - 15.0))
                             val x = center.x + (radius * cos(angle)).toFloat()
                             val y = center.y + (radius * sin(angle)).toFloat()
                             if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
                         }
                         path.close()
-                        drawPath(path = path, color = Color.White, style = Stroke(width = 2f))
+                        drawPath(path = path, color = CyberBlueBright, style = Stroke(width = 2f))
+                        drawCircle(color = Color.White.copy(alpha = 0.4f), radius = radius * 0.7f, center = center, style = Stroke(1f))
                     }
-                    Text(
-                        text = cipherString,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            color = Color.White,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 17.sp
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = cipherString,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                color = TextWhite,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp
+                            )
                         )
-                    )
+                        Text(
+                            text = "[DECRYPTING]",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = CyberBlueBright,
+                                fontSize = 10.sp
+                            )
+                        )
+                    }
                 }
             }
 
             BootPhase.CTOS_BEAM_LOGO -> {
-                // Video Frame 00:09: Horizontal light beam + "ct OS" + "ctOS Authorized Device"
                 Box(
                     modifier = Modifier.fillMaxWidth().height(140.dp),
                     contentAlignment = Alignment.CenterStart
@@ -272,12 +361,12 @@ fun BootScreen(
                             .height(44.dp)
                             .background(
                                 Brush.horizontalGradient(
-                                    colors = listOf(Color.White, Color.White, Color.White.copy(alpha = 0.9f), Color.Transparent)
+                                    colors = listOf(Color.White, CyberBlueBright, CyberBlueBright.copy(alpha = 0.8f), Color.Transparent)
                                 )
                             )
                     )
                     Row(
-                        modifier = Modifier.padding(start = 120.dp),
+                        modifier = Modifier.padding(start = 110.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
@@ -285,7 +374,7 @@ fun BootScreen(
                                 Text(
                                     text = "CT",
                                     style = MaterialTheme.typography.displayMedium.copy(
-                                        color = Color.White,
+                                        color = TextWhite,
                                         fontFamily = FontFamily.SansSerif,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 24.sp
@@ -296,7 +385,7 @@ fun BootScreen(
                                 Text(
                                     text = "OS",
                                     style = MaterialTheme.typography.displayLarge.copy(
-                                        color = Color.White,
+                                        color = TextWhite,
                                         fontFamily = FontFamily.SansSerif,
                                         fontWeight = FontWeight.Black,
                                         fontSize = 58.sp,
@@ -305,9 +394,9 @@ fun BootScreen(
                                 )
                             }
                             Text(
-                                text = "ctOS Authorized Device",
+                                text = "ctOS Authorized Device // Bay Area Cell",
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = Color.White.copy(alpha = 0.85f),
+                                    color = CyberBlueBright,
                                     fontFamily = FontFamily.SansSerif,
                                     fontSize = 11.sp
                                 )
@@ -318,13 +407,12 @@ fun BootScreen(
             }
 
             BootPhase.ISOMETRIC_EMBLEM -> {
-                // Video Frame 00:11: Circle with 3D wireframe isometric polyhedron
-                Box(modifier = Modifier.size(170.dp), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.size(180.dp), contentAlignment = Alignment.Center) {
                     Canvas(modifier = Modifier.fillMaxSize()) {
                         val center = Offset(size.width / 2f, size.height / 2f)
                         val outerRadius = size.width * 0.46f
 
-                        drawCircle(color = Color.White, radius = outerRadius, center = center, style = Stroke(width = 1.8f))
+                        drawCircle(color = CyberBlueBright, radius = outerRadius, center = center, style = Stroke(width = 1.8f))
                         val r = outerRadius * 0.58f
                         val top = Offset(center.x, center.y - r)
                         val bottom = Offset(center.x, center.y + r)
@@ -343,9 +431,9 @@ fun BootScreen(
                             close()
                         }
                         drawPath(hexPath, color = Color.White, style = Stroke(width = 1.8f))
-                        drawLine(color = Color.White, start = center, end = top, strokeWidth = 1.8f)
-                        drawLine(color = Color.White, start = center, end = leftBottom, strokeWidth = 1.8f)
-                        drawLine(color = Color.White, start = center, end = rightBottom, strokeWidth = 1.8f)
+                        drawLine(color = CyberBlueBright, start = center, end = top, strokeWidth = 1.8f)
+                        drawLine(color = CyberBlueBright, start = center, end = leftBottom, strokeWidth = 1.8f)
+                        drawLine(color = CyberBlueBright, start = center, end = rightBottom, strokeWidth = 1.8f)
                         drawLine(color = Color.White, start = leftTop, end = center, strokeWidth = 1.2f)
                         drawLine(color = Color.White, start = rightTop, end = center, strokeWidth = 1.2f)
                         drawLine(color = Color.White, start = bottom, end = center, strokeWidth = 1.2f)
@@ -354,14 +442,13 @@ fun BootScreen(
             }
 
             BootPhase.DEDSEC_HIJACK_BOXES, BootPhase.BOOT_COMPLETE -> {
-                // DedSec Hijack sequence: Boxed letters appear letter-by-letter!
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                     modifier = Modifier.padding(20.dp)
                 ) {
                     Text(
-                        text = "[!] cTOS 2.0 PROTOCOL HIJACKED",
+                        text = "[!] cTOS 2.0 PROTOCOL OVERRIDDEN",
                         style = MaterialTheme.typography.labelMedium.copy(
                             color = DedsecPink,
                             fontWeight = FontWeight.Bold,
@@ -372,14 +459,14 @@ fun BootScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = "DEDSEC OPERATIVE SYSTEM READY",
-                        style = MaterialTheme.typography.bodySmall.copy(color = TextMuted)
+                        text = "DECSEC 1.0 OPERATIVE SUITE INITIALIZED",
+                        style = MaterialTheme.typography.bodySmall.copy(color = TextBlue)
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
                     var globalLetterCounter = 0
-                    targetWords.forEachIndexed { _, wordLetters ->
+                    targetWords.forEach { wordLetters ->
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.padding(vertical = 5.dp)
@@ -398,7 +485,7 @@ fun BootScreen(
                                 }
 
                                 val boxBorderColor = when {
-                                    isRevealed -> NeonGreen
+                                    isRevealed -> CyberBlueBright
                                     isCurrentlyScrambling -> DedsecPink
                                     else -> TerminalBorder
                                 }
@@ -406,11 +493,11 @@ fun BootScreen(
                                 val boxBgColor = when {
                                     isRevealed -> CyberBlack
                                     isCurrentlyScrambling -> DedsecPink.copy(alpha = 0.2f)
-                                    else -> Color(0xFF0A0F14)
+                                    else -> Color(0xFF040A12)
                                 }
 
                                 val boxTextColor = when {
-                                    isRevealed -> NeonGreenBright
+                                    isRevealed -> TextWhite
                                     isCurrentlyScrambling -> DedsecPink
                                     else -> Color.Transparent
                                 }
@@ -419,7 +506,7 @@ fun BootScreen(
                                     color = boxBgColor,
                                     shape = CutCornerShape(4.dp),
                                     border = BorderStroke(1.5.dp, boxBorderColor),
-                                    modifier = Modifier.size(42.dp)
+                                    modifier = Modifier.size(38.dp)
                                 ) {
                                     Box(
                                         contentAlignment = Alignment.Center,
@@ -430,7 +517,7 @@ fun BootScreen(
                                             style = MaterialTheme.typography.titleLarge.copy(
                                                 color = boxTextColor,
                                                 fontWeight = FontWeight.Black,
-                                                fontSize = 20.sp
+                                                fontSize = 18.sp
                                             )
                                         )
                                     }
@@ -442,9 +529,9 @@ fun BootScreen(
                     Spacer(modifier = Modifier.height(28.dp))
 
                     Surface(
-                        color = NeonGreen.copy(alpha = 0.2f),
+                        color = CyberBlueBright.copy(alpha = 0.2f),
                         shape = CutCornerShape(4.dp),
-                        border = BorderStroke(1.dp, NeonGreen),
+                        border = BorderStroke(1.dp, CyberBlueBright),
                         modifier = Modifier
                             .clickable { onBootFinished() }
                             .padding(horizontal = 16.dp, vertical = 6.dp)
@@ -452,7 +539,7 @@ fun BootScreen(
                         Text(
                             text = "INITIALIZATION COMPLETE // TAP TO ENTER",
                             style = MaterialTheme.typography.labelMedium.copy(
-                                color = NeonGreenBright,
+                                color = TextWhite,
                                 fontWeight = FontWeight.Bold
                             ),
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
@@ -462,7 +549,7 @@ fun BootScreen(
             }
         }
 
-        // Bottom Progress Bar
+        // Bottom Progress Bar in Cyber Blue and White
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -475,7 +562,7 @@ fun BootScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(3.dp),
-                color = if (phase == BootPhase.DEDSEC_HIJACK_BOXES) NeonGreen else Color.White,
+                color = if (phase == BootPhase.DEDSEC_HIJACK_BOXES) CyberBlueBright else Color.White,
                 trackColor = Color.White.copy(alpha = 0.15f)
             )
 

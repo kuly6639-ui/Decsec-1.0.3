@@ -149,7 +149,7 @@ fun TerminalScreen(
 
             // Quick command chips row
             val quickChips = listOf(
-                "ping", "ping 8.8.8.8", "devices", "wiretap DEV-PH-02", "scan", "profile", "blackout", "reboot", "exploit CTOS-TRF-881", "decrypt", "botnet", "matrix", "clear"
+                "ping", "ping 8.8.8.8", "hack DEV-PH-02", "hack DEV-TV-01", "hack DEV-LAP-06", "wiretap DEV-PH-02", "devices", "scan", "profile", "blackout", "reboot", "exploit CTOS-TRF-881", "decrypt", "botnet", "matrix", "clear"
             )
             Row(
                 modifier = Modifier
@@ -162,7 +162,7 @@ fun TerminalScreen(
                     Surface(
                         color = PureBlack,
                         shape = CutCornerShape(4.dp),
-                        border = BorderStroke(1.dp, NeonGreen.copy(alpha = 0.6f)),
+                        border = BorderStroke(1.dp, com.example.ui.theme.CyberBlue.copy(alpha = 0.6f)),
                         modifier = Modifier
                             .clickable { onQuickCommand(chipCmd) }
                             .testTag("chip_$chipCmd")
@@ -170,7 +170,7 @@ fun TerminalScreen(
                         Text(
                             text = chipCmd,
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = if (chipCmd.startsWith("ping")) NeonGreenBright else NeonGreen
+                                color = if (chipCmd.startsWith("hack") || chipCmd.startsWith("ping")) com.example.ui.theme.CyberBlueBright else TextWhite
                             ),
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
@@ -185,7 +185,7 @@ fun TerminalScreen(
                     .weight(1f)
                     .fillMaxWidth()
                     .background(PureBlack, CutCornerShape(4.dp))
-                    .border(1.dp, NeonGreen.copy(alpha = 0.35f), CutCornerShape(4.dp))
+                    .border(1.dp, com.example.ui.theme.TerminalBorder, CutCornerShape(4.dp))
                     .padding(8.dp)
             ) {
                 items(terminalLines, key = { it.id }) { line ->
@@ -199,7 +199,7 @@ fun TerminalScreen(
             Surface(
                 color = PureBlack,
                 shape = CutCornerShape(bottomStart = 6.dp, bottomEnd = 6.dp),
-                border = BorderStroke(1.dp, NeonGreen.copy(alpha = 0.8f)),
+                border = BorderStroke(1.dp, com.example.ui.theme.CyberBlue.copy(alpha = 0.8f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -211,7 +211,7 @@ fun TerminalScreen(
                     Text(
                         text = "decsec@ctos:~# ",
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            color = NeonGreen,
+                            color = com.example.ui.theme.CyberBlueBright,
                             fontWeight = FontWeight.Bold
                         )
                     )
@@ -221,9 +221,9 @@ fun TerminalScreen(
                             value = inputText,
                             onValueChange = onInputChange,
                             textStyle = MaterialTheme.typography.bodyMedium.copy(
-                                color = NeonGreenBright
+                                color = TextWhite
                             ),
-                            cursorBrush = SolidColor(NeonGreen),
+                            cursorBrush = SolidColor(com.example.ui.theme.CyberBlueBright),
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                             keyboardActions = KeyboardActions(onSend = { onExecuteInput() }),
                             singleLine = true,
@@ -235,16 +235,16 @@ fun TerminalScreen(
                         if (inputText.isEmpty()) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = "type 'ping' or 'help'...",
+                                    text = "type 'hack DEV-PH-02' or 'ping'...",
                                     style = MaterialTheme.typography.bodyMedium.copy(
-                                        color = TextMuted.copy(alpha = 0.6f)
+                                        color = TextWhite.copy(alpha = 0.4f)
                                     )
                                 )
                                 Spacer(modifier = Modifier.width(2.dp))
                                 Text(
                                     text = "█",
                                     style = MaterialTheme.typography.bodyMedium.copy(
-                                        color = NeonGreen.copy(alpha = cursorAlpha)
+                                        color = com.example.ui.theme.CyberBlueBright.copy(alpha = cursorAlpha)
                                     )
                                 )
                             }
@@ -260,7 +260,7 @@ fun TerminalScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Send,
                             contentDescription = "Execute Command",
-                            tint = NeonGreen,
+                            tint = com.example.ui.theme.CyberBlueBright,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -281,16 +281,16 @@ private fun TerminalLineRow(line: TerminalLine) {
     }
 
     val textColor = when (line.type) {
-        LineType.COMMAND -> NeonGreenBright
-        LineType.CYBER_BANNER -> NeonGreenBright
-        LineType.SUCCESS -> NeonGreenBright
+        LineType.COMMAND -> com.example.ui.theme.TextWhite
+        LineType.CYBER_BANNER -> com.example.ui.theme.CyberBlueBright
+        LineType.SUCCESS -> com.example.ui.theme.CyberBlueBright
         LineType.ERROR -> Color(0xFFFF2A4B)
-        LineType.WARNING -> NeonGreen
-        LineType.HEX_DUMP -> NeonGreenDim
-        LineType.SYSTEM -> NeonGreen
-        LineType.OUTPUT -> NeonGreen
-        LineType.GLITCH -> NeonGreenBright
-        LineType.PING_PROGRESS -> NeonGreenBright
+        LineType.WARNING -> Color(0xFFFFB703)
+        LineType.HEX_DUMP -> com.example.ui.theme.CyberBlueDim
+        LineType.SYSTEM -> com.example.ui.theme.CyberBlue
+        LineType.OUTPUT -> TextWhite
+        LineType.GLITCH -> com.example.ui.theme.CyberBlueBright
+        LineType.PING_PROGRESS -> com.example.ui.theme.CyberBlueBright
     }
 
     Text(

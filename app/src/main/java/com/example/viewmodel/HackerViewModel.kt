@@ -73,6 +73,11 @@ class HackerViewModel(application: Application) : AndroidViewModel(application) 
     private val _selectedTab = MutableStateFlow(0)
     val selectedTab: StateFlow<Int> = _selectedTab.asStateFlow()
 
+    private val _activeHacking = MutableStateFlow<com.example.model.HackingProgress?>(null)
+    val activeHacking: StateFlow<com.example.model.HackingProgress?> = _activeHacking.asStateFlow()
+
+    private var activeHackingJob: kotlinx.coroutines.Job? = null
+
     init {
         initDedsecWelcome()
         initProfilerTargets()
@@ -180,13 +185,9 @@ class HackerViewModel(application: Application) : AndroidViewModel(application) 
                 signalDbm = -48,
                 ip = "192.168.1.42",
                 protocol = "Tizen OS / Cast / UPnP",
-                callSubject = "Smart Assistant Voice Stream",
-                callerNumber = "TV_MIC://LivingRoom_Hub",
-                callTranscript = listOf(
-                    InterceptedCallMessage("Owner", "Alexa, dim the living room neon lights to 30%", 2),
-                    InterceptedCallMessage("Assistant", "Living room lights set to 30% cyber green.", 5),
-                    InterceptedCallMessage("Owner", "Now play DedSec radio stream on maximum bass.", 9)
-                )
+                callSubject = "DLNA / UPnP Media Feed (No Voice/Call Feed)",
+                callerNumber = "TIZEN_DEV://LivingRoom_Hub",
+                callTranscript = emptyList()
             ),
             NearbyElectronicDevice(
                 id = "DEV-PH-02",
@@ -252,12 +253,9 @@ class HackerViewModel(application: Application) : AndroidViewModel(application) 
                 signalDbm = -62,
                 ip = "192.168.1.103",
                 protocol = "webOS / Miracast",
-                callSubject = "Conference Boardroom Meeting",
+                callSubject = "webOS Miracast Media Stream (No Voice/Call Feed)",
                 callerNumber = "LG_CONF://Room_B",
-                callTranscript = listOf(
-                    InterceptedCallMessage("Director", "The city council approved the ctOS 2.0 biometric contract.", 2),
-                    InterceptedCallMessage("Counsel", "If DedSec leaks this to the public, there will be riots.", 6)
-                )
+                callTranscript = emptyList()
             ),
             NearbyElectronicDevice(
                 id = "DEV-LAP-06",
@@ -269,17 +267,22 @@ class HackerViewModel(application: Application) : AndroidViewModel(application) 
                 signalDbm = -38,
                 ip = "192.168.1.22",
                 protocol = "SSH / TLS / mDNS",
-                callSubject = "VoIP Developer Standup",
+                callSubject = "Encrypted TLS SSH Shell (No Voice/Call Feed)",
                 callerNumber = "VOIP://DevOps_Bridge",
-                callTranscript = listOf(
-                    InterceptedCallMessage("DevOps Lead", "Deploying build v2.4.9 to the Blume cloud cluster.", 3),
-                    InterceptedCallMessage("Engineer", "Confirmed. Keep the fallback firewall port 8080 open.", 7)
-                )
+                callTranscript = emptyList()
             )
         )
     }
 
     fun tapDeviceCall(device: NearbyElectronicDevice) {
+        if (!device.canInterceptCall) {
+            soundManager.playHackFailSound()
+            addLine(TerminalLine(
+                text = "[ACCESS DENIED] ${device.name} is a ${device.category.name.replace("_", " ")}. TVs and laptops cannot be hacked for voice/cellular calls.",
+                type = LineType.ERROR
+            ))
+            return
+        }
         soundManager.playPhoneRing()
         _activeTappedDevice.value = device
         _nearbyDevices.update { list ->
@@ -302,16 +305,121 @@ class HackerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun hackNearbyDevice(device: NearbyElectronicDevice) {
-        viewModelScope.launch {
-            soundManager.playDataStream()
-            delay(300)
-            _nearbyDevices.update { list ->
-                list.map { if (it.id == device.id) it.copy(isHacked = true) else it }
+        if (device.isHacked) return
+        startHackingProcess(
+            targetId = device.id,
+            targetName = device.name,
+            onSuccess = {
+                _nearbyDevices.update { list ->
+                    list.map { if (it.id == device.id) it.copy(isHacked = true) else it }
+                }
+                val gain = 10000
+                _botnetStatus.update { it.copy(followers = it.followers + gain) }
+                addLine(TerminalLine(
+                    text = "[DEVICE BREACHED] ${device.name} compromised! DecSec root shell injected. +10,000 Followers!",
+                    type = LineType.CYBER_BANNER
+                ))
             }
-            soundManager.playAccessGranted()
-            val gain = 8000
-            _botnetStatus.update { it.copy(followers = it.followers + gain) }
-            addLine(TerminalLine(text = "[DEVICE BREACHED] ${device.name} compromised via CVE-2026-BLE exploit! +8,000 Followers!", type = LineType.SUCCESS))
+        )
+    }
+
+    fun startHackingProcess(
+        targetId: String,
+        targetName: String,
+        onSuccess: suspend () -> Unit
+    ) {
+        if (_activeHacking.value != null && !_activeHacking.value!!.isComplete) return
+
+        activeHackingJob?.cancel()
+        activeHackingJob = viewModelScope.launch {
+            // Random hacking duration between 2200ms and 5200ms
+            val durationMs = kotlin.random.Random.nextLong(2200, 5200)
+            val startTime = System.currentTimeMillis()
+
+            soundManager.playHackStartSound()
+            addLine(TerminalLine(
+                text = "[BREACH INITIATED] Target: $targetName | Crack window: %.1fs | Injecting payload...".format(durationMs / 1000.0),
+                type = LineType.SYSTEM
+            ))
+
+            val steps = listOf(
+                "Analyzing network protocol stack...",
+                "Bypassing firewall NAT table...",
+                "Fuzzing zero-day memory buffers...",
+                "Overriding hardware firmware locks...",
+                "Extracting root privileges...",
+                "Finalizing DecSec backdoor injection..."
+            )
+
+            val tickInterval = 100L
+            while (true) {
+                val elapsed = System.currentTimeMillis() - startTime
+                val progress = (elapsed.toFloat() / durationMs).coerceIn(0f, 1f)
+                val stepIdx = ((progress * steps.size).toInt()).coerceIn(0, steps.size - 1)
+                val currentStep = steps[stepIdx]
+
+                _activeHacking.value = com.example.model.HackingProgress(
+                    targetId = targetId,
+                    targetName = targetName,
+                    progress = progress,
+                    statusText = "INFILTRATING // ${(progress * 100).toInt()}%",
+                    isComplete = false,
+                    isSuccess = false,
+                    currentStep = currentStep,
+                    totalDurationMs = durationMs,
+                    elapsedTimeMs = elapsed
+                )
+
+                if (elapsed >= durationMs) break
+
+                if (elapsed % 300L < tickInterval) {
+                    soundManager.playLetterLoadSound()
+                }
+
+                delay(tickInterval)
+            }
+
+            // High success probability (92%)
+            val isSuccess = kotlin.random.Random.nextFloat() < 0.92f
+
+            if (isSuccess) {
+                soundManager.playHackSuccessSound()
+                _activeHacking.value = _activeHacking.value?.copy(
+                    progress = 1f,
+                    statusText = "[BREACH CONFIRMED] ACCESS GRANTED",
+                    currentStep = "Target breached successfully. Master key deployed.",
+                    isComplete = true,
+                    isSuccess = true
+                )
+                onSuccess()
+            } else {
+                soundManager.playHackFailSound()
+                _activeHacking.value = _activeHacking.value?.copy(
+                    progress = 1f,
+                    statusText = "[BREACH FAILED] CONNECTION RESET",
+                    currentStep = "Target security daemon detected intrusion and severed link.",
+                    isComplete = true,
+                    isSuccess = false
+                )
+                addLine(TerminalLine(
+                    text = "[BREACH FAILED] $targetName intrusion detection tripped firewall reset.",
+                    type = LineType.ERROR
+                ))
+            }
+
+            delay(1500)
+            _activeHacking.value = null
+        }
+    }
+
+    fun abortHacking() {
+        activeHackingJob?.cancel()
+        activeHackingJob = null
+        val cur = _activeHacking.value
+        if (cur != null) {
+            soundManager.playHackFailSound()
+            addLine(TerminalLine(text = "[HACK ABORTED] Manual termination of exploit against ${cur.targetName}.", type = LineType.WARNING))
+            _activeHacking.value = null
         }
     }
 
@@ -464,15 +572,16 @@ class HackerViewModel(application: Application) : AndroidViewModel(application) 
                         val tapState = if (d.isTapped) " [WIRETAP ACTIVE]" else ""
                         addLine(TerminalLine(text = " > [${d.id}] ${d.name} (${d.category}) | ${d.distanceMeters}m | ${d.protocol} $status$tapState", type = LineType.OUTPUT))
                     }
-                    addLine(TerminalLine(text = "Use 'wiretap <device_id>' to tap audio / intercept live calls.", type = LineType.WARNING))
+                    addLine(TerminalLine(text = "Use 'wiretap <device_id>' to tap audio (smartphones only).", type = LineType.WARNING))
+                    addLine(TerminalLine(text = "Use 'hack <device_id>' to run exploit cracking against any device.", type = LineType.WARNING))
                 }
                 "wiretap", "tap" -> {
                     if (arg.isEmpty()) {
-                        val firstTappable = _nearbyDevices.value.firstOrNull()
+                        val firstTappable = _nearbyDevices.value.firstOrNull { it.canInterceptCall }
                         if (firstTappable != null) {
                             tapDeviceCall(firstTappable)
                         } else {
-                            addLine(TerminalLine(text = "Usage: wiretap <device_id> (e.g. wiretap DEV-PH-02)", type = LineType.WARNING))
+                            addLine(TerminalLine(text = "Usage: wiretap <device_id> (e.g. wiretap DEV-PH-02). TVs and laptops cannot be tapped for calls.", type = LineType.WARNING))
                         }
                     } else {
                         val targetDev = _nearbyDevices.value.find { it.id.lowercase() == arg }
@@ -480,10 +589,27 @@ class HackerViewModel(application: Application) : AndroidViewModel(application) 
                             tapDeviceCall(targetDev)
                         } else {
                             addLine(TerminalLine(text = "Device '$arg' out of radio range or invalid ID.", type = LineType.ERROR))
-                            soundManager.playAccessDenied()
+                            soundManager.playHackFailSound()
                         }
                     }
                 }
+                "hack" -> {
+                    if (arg.isEmpty()) {
+                        addLine(TerminalLine(text = "Usage: hack <target_id> (e.g. hack DEV-TV-01, hack DEV-LAP-06, hack CTOS-TRF-881)", type = LineType.WARNING))
+                    } else {
+                        val dev = _nearbyDevices.value.find { it.id.lowercase() == arg }
+                        val node = _networkNodes.value.find { it.id.lowercase() == arg }
+                        if (dev != null) {
+                            hackNearbyDevice(dev)
+                        } else if (node != null) {
+                            triggerNodeExploit(node, node.exploits.firstOrNull())
+                        } else {
+                            addLine(TerminalLine(text = "Target '$arg' not found in active telemetry.", type = LineType.ERROR))
+                            soundManager.playHackFailSound()
+                        }
+                    }
+                }
+                "abort" -> abortHacking()
                 "reboot" -> {
                     addLine(TerminalLine(text = "[SYS] Initiating ctOS 2.0 system cold reboot sequence...", type = LineType.WARNING))
                     delay(300)
@@ -589,30 +715,22 @@ class HackerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun triggerNodeExploit(node: NetworkNode, exploit: NodeExploit?) {
-        viewModelScope.launch {
-            val expName = exploit?.name ?: "Zero-Day Injection"
-            addLine(TerminalLine(text = "[*] Deploying payload '$expName' against ${node.id} (${node.ip})...", type = LineType.SYSTEM))
-            soundManager.playDataStream()
-
-            // Update node to breaching state
-            _networkNodes.update { list ->
-                list.map { if (it.id == node.id) it.copy(status = ExploitStatus.BREACHING) else it }
+        val expName = exploit?.name ?: "Zero-Day Injection"
+        startHackingProcess(
+            targetId = node.id,
+            targetName = "${node.name} [${node.ip}]",
+            onSuccess = {
+                _networkNodes.update { list ->
+                    list.map { if (it.id == node.id) it.copy(status = ExploitStatus.EXPLOITED) else it }
+                }
+                val reward = exploit?.followerReward ?: 12000
+                _botnetStatus.update { it.copy(followers = it.followers + reward) }
+                addLine(TerminalLine(
+                    text = "[SUCCESS] ${node.id} OVERRIDDEN via $expName! +%,d DEDSEC FOLLOWERS ACQUIRED!".format(reward),
+                    type = LineType.CYBER_BANNER
+                ))
             }
-
-            delay(600)
-            addLine(TerminalLine(text = "[>] Bypassing firewall via CVE-2026-8819 stack overflow...", type = LineType.HEX_DUMP))
-            delay(500)
-
-            _networkNodes.update { list ->
-                list.map { if (it.id == node.id) it.copy(status = ExploitStatus.EXPLOITED) else it }
-            }
-
-            val reward = exploit?.followerReward ?: 10000
-            _botnetStatus.update { it.copy(followers = it.followers + reward) }
-            soundManager.playAccessGranted()
-
-            addLine(TerminalLine(text = "[SUCCESS] ${node.id} OVERRIDDEN! +%,d DEDSEC FOLLOWERS ACQUIRED!".format(reward), type = LineType.CYBER_BANNER))
-        }
+        )
     }
 
     fun triggerBlackout() {

@@ -91,6 +91,7 @@ fun DedsecApp(viewModel: HackerViewModel = viewModel()) {
     val botnetStatus by viewModel.botnetStatus.collectAsState()
     val cipherGame by viewModel.cipherGame.collectAsState()
     val isBlackoutActive by viewModel.isBlackoutActive.collectAsState()
+    val activeHacking by viewModel.activeHacking.collectAsState()
 
     // If initial boot sequence is active, show the Watch Dogs ctOS startup animation
     if (showBootScreen) {
@@ -149,7 +150,8 @@ fun DedsecApp(viewModel: HackerViewModel = viewModel()) {
                     botnetStatus = botnetStatus,
                     onNavigateTab = { viewModel.setSelectedTab(it) },
                     onTapNearbyDevice = { dev -> viewModel.tapDeviceCall(dev) },
-                    onExecuteCommand = { cmd -> viewModel.executeCommand(cmd) }
+                    onExecuteCommand = { cmd -> viewModel.executeCommand(cmd) },
+                    onHackDevice = { dev -> viewModel.hackNearbyDevice(dev) }
                 )
                 1 -> TerminalScreen(
                     terminalLines = terminalLines,
@@ -193,6 +195,12 @@ fun DedsecApp(viewModel: HackerViewModel = viewModel()) {
                     onExtractCredentials = { viewModel.extractIntelFromCall(tappedDev) }
                 )
             }
+
+            // Active Hacking Process HUD Overlay with random cracking duration
+            com.example.ui.components.HackingProgressHud(
+                hackingProgress = activeHacking,
+                onAbort = { viewModel.abortHacking() }
+            )
         }
     }
 }
@@ -217,7 +225,7 @@ fun DedsecBottomNavigation(
         tonalElevation = 0.dp,
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, NeonGreen.copy(alpha = 0.5f), CutCornerShape(topStart = 8.dp, topEnd = 8.dp))
+            .border(1.dp, com.example.ui.theme.CyberBlue.copy(alpha = 0.5f), CutCornerShape(topStart = 8.dp, topEnd = 8.dp))
             .testTag("dedsec_bottom_navigation")
     ) {
         items.forEachIndexed { index, item ->
@@ -245,7 +253,7 @@ fun DedsecBottomNavigation(
                         Text(
                             text = item.label,
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = NeonGreen,
+                                color = com.example.ui.theme.TextWhite.copy(alpha = 0.7f),
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Normal,
                                 letterSpacing = 0.5.sp
@@ -256,9 +264,9 @@ fun DedsecBottomNavigation(
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = PureBlackText,
                     selectedTextColor = PureBlackText,
-                    indicatorColor = NeonGreen,
-                    unselectedIconColor = NeonGreen.copy(alpha = 0.7f),
-                    unselectedTextColor = NeonGreen.copy(alpha = 0.7f)
+                    indicatorColor = com.example.ui.theme.CyberBlueBright,
+                    unselectedIconColor = com.example.ui.theme.CyberBlue.copy(alpha = 0.7f),
+                    unselectedTextColor = com.example.ui.theme.TextWhite.copy(alpha = 0.7f)
                 ),
                 modifier = Modifier.testTag(item.testTag)
             )

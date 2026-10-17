@@ -153,5 +153,21 @@ data class NearbyElectronicDevice(
     val callSubject: String = "Encrypted Voice Call",
     val callerNumber: String = "+1 (415) 555-0198",
     val callTranscript: List<InterceptedCallMessage> = emptyList()
+) {
+    // TVs and laptops cannot be hacked for calls
+    val canInterceptCall: Boolean
+        get() = category != DeviceCategory.SMART_TV && category != DeviceCategory.LAPTOP
+}
+
+data class HackingProgress(
+    val targetId: String,
+    val targetName: String,
+    val progress: Float = 0f,
+    val statusText: String = "Initializing breach...",
+    val isComplete: Boolean = false,
+    val isSuccess: Boolean = false,
+    val currentStep: String = "Injecting exploit vector...",
+    val totalDurationMs: Long = 3000L,
+    val elapsedTimeMs: Long = 0L
 )
 
